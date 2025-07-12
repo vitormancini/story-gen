@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Route } from "./+types/login";
+import { useFetcher } from "react-router";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -13,10 +14,16 @@ export async function action({ request }: Route.ActionArgs) {
   const email = formData.get("email");
   const password = formData.get("password");
   console.log( { email, password });
+
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
   return { email, password };
 } 
 
 export default function Login() {
+
+    const fetcher = useFetcher();
+    const busy = fetcher.state !== "idle";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -30,7 +37,7 @@ export default function Login() {
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" method="POST">
+        <fetcher.Form className="mt-8 space-y-6" method="POST">
           <div className="space-y-4">
             {/* Email Field */}
             <div>
@@ -76,8 +83,8 @@ export default function Login() {
             </div>
           </div>
 
-          <button type="submit" className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer">Login</button>
-        </form>
+          <button disabled={busy} type="submit" className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer disabled:opacity-25 disabled:bg-gray-300">Login</button>
+        </fetcher.Form>
       </div>
     </div>
   );
