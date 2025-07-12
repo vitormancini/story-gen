@@ -1,29 +1,45 @@
-import { useState } from "react";
-import type { Route } from "./+types/login";
-import { useFetcher } from "react-router";
+import { redirect, useFetcher } from "react-router";
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { z } from "zod";
+import { parseWithZod } from "@conform-to/zod";
+import type { Route } from "../+types/root";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Login - Story Gen" },
     { name: "description", content: "Login to your account" },
   ];
 }
 
-export async function action({ request }: Route.ActionArgs) {
+const schema = z.object({
+    email: z.string().email("Please enter a valid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+})
+
+export async function action({ request }: { request: Request }) {
   const formData = await request.formData();
-  const email = formData.get("email");
-  const password = formData.get("password");
-  console.log( { email, password });
+  
+  const submission = parseWithZod(formData, { schema });
+
+  if (submission.status !== "success") {
+    return submission.reply();  
+  }
 
   await new Promise(resolve => setTimeout(resolve, 3000));
 
-  return { email, password };
+  return redirect("/");
 } 
 
-export default function Login() {
-
+export default function Login({ actionData }: Route.ComponentProps) {
     const fetcher = useFetcher();
     const busy = fetcher.state !== "idle";
+
+    const [form, fields] = useForm({
+        lastResult: actionData,
+        onValidate({ formData }) {
+            return parseWithZod(formData, { schema })
+        }
+    });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -37,53 +53,58 @@ export default function Login() {
           </p>
         </div>
         
-        <fetcher.Form className="mt-8 space-y-6" method="POST">
+        <fetcher.Form {...getFormProps(form)} className="mt-8 space-y-6" method="POST">
           <div className="space-y-4">
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor={fields.email.id} className="block text-sm font-medium text-gray-700">
                 Email address
               </label>
               <div className="mt-1">
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  value="vitor.mancini@email.com"
-                  required
-                  className={`appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                  {...getInputProps(fields.email, { type: "email" })}
+                  className={`appearance-none relative block w-full px-3 py-2 border ${
+                    fields.email.errors?.length ? 'border-red-300' : 'border-gray-300'
+                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                   placeholder="Enter your email"
                 />
+
+                {fields.email.errors?.length && (
+                  <p className="mt-1 text-sm text-red-600">{fields.email.errors[0]}</p>
+                )}
+
               </div>
             </div>
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor={fields.password.id} className="block text-sm font-medium text-gray-700">
                 Password
               </label>
               <div className="mt-1 relative">
                 <input
-                  id="password"
-                  name="password"
-                  autoComplete="current-password"
-                  value="123456"
-                  required
-                  className={`appearance-none relative block w-full px-3 py-2 pr-10 border 'border-red-300' : 'border-gray-300'
+                  {...getInputProps(fields.password, { type: "password" })}
+                  className={`appearance-none relative block w-full px-3 py-2 pr-10 border ${
+                    fields.password.errors?.length ? 'border-red-300' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                   placeholder="Enter your password"
                 />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                >
-                </button>
+
+                {fields.password.errors?.length && (
+                  <p className="mt-1 text-sm text-red-600">{fields.password.errors[0]}</p>
+                )}
+
               </div>
             </div>
           </div>
 
-          <button disabled={busy} type="submit" className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer disabled:opacity-25 disabled:bg-gray-300">Login</button>
+          <button 
+            disabled={busy} 
+            type="submit" 
+            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            Sign in
+          </button>
         </fetcher.Form>
       </div>
     </div>
