@@ -1,9 +1,18 @@
+import { getBrewery, type Brewery } from "~/beer";
 import type { Route } from "../+types/root";
+import { Route } from "react-router";
 
-export default function({params}: Route.ComponentProps) {
+export async function loader({params}: Route.LoaderArgs) {
+    const brewery = await getBrewery(params.id) as Brewery;
+    return {
+        brewery
+    }
+}
+
+export default async function({loaderData}: Route.ComponentProps) {
     return (
         <div>
-            <h1 className="text-2xl font-bold text-gray-900">Id: {params.id}</h1>
+            <pre className="text-gray-900">{JSON.stringify(loaderData.brewery, null, 2)}</pre>
         </div>
     )
 } 

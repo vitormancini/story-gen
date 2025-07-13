@@ -1,28 +1,10 @@
 import { Link, Outlet } from "react-router";
 import type { Route } from "../+types/root";
-
-type brewery = {
-  id: string;
-  name: string;
-  brewery_type: string;
-  address_1: string;
-  address_2: string | null;
-  address_3: string | null;
-  city: string;
-  state_province: string;
-  postal_code: string;
-  country: string;
-  longitude: number;
-  latitude: number;
-  phone: string | null;
-  website_url: string;
-  state: string;
-  street: string;
-};
+import type { Brewery } from "~/beer";
 
 export async function loader() {
   const response = await fetch("https://api.openbrewerydb.org/v1/breweries");
-  const breweries = (await response.json()) as brewery[];
+  const breweries = (await response.json()) as Brewery[];
 
   return {
     title: "Breweries PAGE",
@@ -32,7 +14,7 @@ export async function loader() {
 
 export default function breweries({ loaderData }: Route.ComponentProps) {
   // Type assertion to handle the loader data
-  const data = loaderData as { title: string; data: brewery[] } | undefined;
+  const data = loaderData as { title: string; data: Brewery[] } | undefined;
   
   if (!data) {
     return <div className="p-8 text-center">Loading breweries...</div>;
@@ -47,13 +29,14 @@ export default function breweries({ loaderData }: Route.ComponentProps) {
           <p className="text-lg text-gray-600">Discover amazing craft breweries from around the world</p>
         </div>
 
-        <div>
-          <Outlet />
-        </div>
+        <div className="grid grid-cols-2">
+          <div>
+            <Outlet />
+          </div>
 
-        {/* Breweries Grid */}
+          {/* Breweries Grid */}
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {data.data.map((brewery: brewery) => (
+          {data.data.map((brewery: Brewery) => (
             <li key={brewery.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
               {/* Card Header */}
               <div className="p-6 border-b border-gray-100">
@@ -116,13 +99,8 @@ export default function breweries({ loaderData }: Route.ComponentProps) {
             </li>
           ))}
         </ul>
-
-        {/* Footer */}
-        <div className="mt-12 text-center">
-          <p className="text-gray-600">
-            Showing {data.data.length} breweries from the Open Brewery Database
-          </p>
         </div>
+        
       </div>
     </div>
   );
